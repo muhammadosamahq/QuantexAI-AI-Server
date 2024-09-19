@@ -13,6 +13,7 @@ AI/emotion
 AI/facial
 quantexai/
 Experiment/
+src/chatgpt_chroma_db
 
 # File formats
 *.pyc
