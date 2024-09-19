@@ -12,6 +12,7 @@ testing/
 AI/emotion
 AI/facial
 quantexai/
+Experiment/
 
 # File formats
 *.pyc
