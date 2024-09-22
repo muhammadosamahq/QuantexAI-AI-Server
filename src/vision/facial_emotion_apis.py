@@ -9,41 +9,33 @@ from deepface import DeepFace
 from typing import Optional
 import shutil
 
-from face_detect import process_video_frame_by_frame
+from vision.registration import process_video_frame_by_frame
 
 app = FastAPI()
 
 REGISTERED_FACES_DIR = 'registered_faces'
 os.makedirs(REGISTERED_FACES_DIR, exist_ok=True)
 
-# class Face(BaseModel):
-#     name: str
-    
 
-
-@app.post('/upload_video')
+@app.post('/registration')
 async def upload_video(video: UploadFile = File(...), name: str = Form(...)):
     video_path = os.path.join("uploads", video.filename)
 
-    # Ensure uploads directory exists
     if not os.path.exists("uploads"):
         os.makedirs("uploads")
 
-    # Save the video file
     with open(video_path, "wb") as f:
         shutil.copyfileobj(video.file, f)
 
-    # Process the video for face detection and embeddings
     name, embeddings = process_video_frame_by_frame(video_path, name)
 
-    # Clean up the uploaded video file after processing
     os.remove(video_path)
 
     if name and embeddings is not None:
         return JSONResponse(content={
             "status": "Face detected and registered",
             "name": name,
-            "embeddings": embeddings.tolist()  # Convert numpy array to list for JSON serialization
+            "embeddings": embeddings.tolist()
         })
     else:
         raise HTTPException(status_code=404, detail="No face detected or confidence was too low")
