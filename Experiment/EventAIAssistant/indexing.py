@@ -1,11 +1,11 @@
 from langchain.text_splitter import NLTKTextSplitter
 from sentence_transformers import SentenceTransformer
 from langchain_community.vectorstores import FAISS
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+#from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain_community.document_loaders import DirectoryLoader, JSONLoader, PyPDFLoader, UnstructuredMarkdownLoader
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+#from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 import json
@@ -172,32 +172,32 @@ def recursivecharacterchunking(docs, chunk_size, chunk_overlap):
 #     except Exception as e:
 #         print(f"An error occurred: {e}")
 
-def save_google_embeddings_to_vectorstore(chunks):
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-    vector_store_path = "google_chroma_db"
-    f = 50
-    try:
-        # Check if the vector store file exists
-        if os.path.isdir(vector_store_path):
-            for i in range(0, len(chunks), 50):
-                chunk_size = chunks[i:f]
-                vector_store = Chroma.add_documents(persist_directory="./google_chroma_db", embedding=embeddings)
-                print('Loaded existing vector store with', vector_store._collection.count(), 'records')
-                vector_store.add_documents(chunk_size)
-                print('New docs added in vectore store', vector_store._collection.count(), 'records')
-                f += 50
+# def save_google_embeddings_to_vectorstore(chunks):
+#     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+#     vector_store_path = "google_chroma_db"
+#     f = 50
+#     try:
+#         # Check if the vector store file exists
+#         if os.path.isdir(vector_store_path):
+#             for i in range(0, len(chunks), 50):
+#                 chunk_size = chunks[i:f]
+#                 vector_store = Chroma.add_documents(persist_directory="./google_chroma_db", embedding=embeddings)
+#                 print('Loaded existing vector store with', vector_store._collection.count(), 'records')
+#                 vector_store.add_documents(chunk_size)
+#                 print('New docs added in vectore store', vector_store._collection.count(), 'records')
+#                 f += 50
 
-        else:
-            print('Vector store not found, creating new vector store.......')
-            for i in range(0, len(chunks), 50):
-                chunk_size = chunks[i:f]
-                print('chunk size', len(chunk_size))
-                vector_store = Chroma.from_documents(chunks, embeddings, persist_directory="./google_chroma_db")
-                print('created new vector store with', vector_store._collection.count(), 'records')
-                f += 50
+#         else:
+#             print('Vector store not found, creating new vector store.......')
+#             for i in range(0, len(chunks), 50):
+#                 chunk_size = chunks[i:f]
+#                 print('chunk size', len(chunk_size))
+#                 vector_store = Chroma.from_documents(chunks, embeddings, persist_directory="./google_chroma_db")
+#                 print('created new vector store with', vector_store._collection.count(), 'records')
+#                 f += 50
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
+#     except Exception as e:
+#         print(f"An error occurred: {e}")
 
 def save_chatgpt_embeddings_to_vectorstore(chunks):
     embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"), model="text-embedding-3-small")
@@ -239,7 +239,7 @@ if __name__ == '__main__':
     # # Load Markdown files as documents using UnstructuredMarkdownLoader
     # docs = load_md_as_docs(md_directory)
     docs = []
-    pdfs = ["data/pdfs/Boundless_Technologies_Profile.pdf", "data/pdfs/Prowess_Presentation.pdf"]
+    pdfs = ["data/pdfs/first-jazzcash-digital-merchant-onboarding-portal-pakistan.pdf", "data/pdfs/MMBL-terms-and-conditions-for-mobile-account-2021.pdf"]
 
     for pdf in pdfs:
         loader = PyPDFLoader(pdf, extract_images=True)
