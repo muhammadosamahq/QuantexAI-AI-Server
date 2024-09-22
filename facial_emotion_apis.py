@@ -1,38 +1,53 @@
-# VGG-Face, Google, FaceNet, Open-Face, Facebook DeepFace, DeepID, ArcFace, Dlib
-
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse
+
+# from pydantic import BaseModel
 import cv2
 import numpy as np
 import os
 from deepface import DeepFace
 from typing import Optional
+import shutil
+
+from face_detect import process_video_frame_by_frame
 
 app = FastAPI()
 
 REGISTERED_FACES_DIR = 'registered_faces'
 os.makedirs(REGISTERED_FACES_DIR, exist_ok=True)
 
-class Face(BaseModel):
-    name: str
+# class Face(BaseModel):
+#     name: str
+    
 
-@app.post("/register_face/")
-async def register_face(file: UploadFile = File(...), name: str = Form(...)):
-    img_bytes = await file.read()
-    nparr = np.frombuffer(img_bytes, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    temp_file_path = 'temp.jpg'
-    cv2.imwrite(temp_file_path, img)
-    try:
-        embeddings = DeepFace.represent(img_path=temp_file_path, model_name='VGG-Face', enforce_detection=False)
-        face_encoding = embeddings[0]['embedding']
-        face_filename = os.path.join(REGISTERED_FACES_DIR, f"{name}.npy")
-        np.save(face_filename, face_encoding)
-        os.remove(temp_file_path)
-        return {"message": "Face registered successfully"}
-    except Exception as e:
-        os.remove(temp_file_path)
-        return {"message": f"Error: {str(e)}"}
+
+@app.post('/upload_video')
+async def upload_video(video: UploadFile = File(...), name: str = Form(...)):
+    video_path = os.path.join("uploads", video.filename)
+
+    # Ensure uploads directory exists
+    if not os.path.exists("uploads"):
+        os.makedirs("uploads")
+
+    # Save the video file
+    with open(video_path, "wb") as f:
+        shutil.copyfileobj(video.file, f)
+
+    # Process the video for face detection and embeddings
+    name, embeddings = process_video_frame_by_frame(video_path, name)
+
+    # Clean up the uploaded video file after processing
+    os.remove(video_path)
+
+    if name and embeddings is not None:
+        return JSONResponse(content={
+            "status": "Face detected and registered",
+            "name": name,
+            "embeddings": embeddings.tolist()  # Convert numpy array to list for JSON serialization
+        })
+    else:
+        raise HTTPException(status_code=404, detail="No face detected or confidence was too low")
+
 
 @app.get("/list_registered_faces/")
 def list_registered_faces():
@@ -63,6 +78,8 @@ async def detect_emotion(file: UploadFile = File(...)):
     except Exception as e:
         os.remove(temp_file_path)
         return {"message": f"Error: {str(e)}"}
+    
+
 
 if __name__ == "__main__":
     import uvicorn
