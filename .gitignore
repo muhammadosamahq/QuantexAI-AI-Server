@@ -28,3 +28,7 @@ text.txt
 guide.txt
 src/chroma_db
 src/faiss_index
+
+
+src/vision/video_1.mp4
+src/vision/video_2.mp4
