@@ -9,6 +9,7 @@ import os
 # from langchain_community.vectorstores import FAISS
 #from langchain_google_genai import GoogleGenerativeAI
 from langchain_openai import ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
 #from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
@@ -41,7 +42,7 @@ from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_groq import ChatGroq
+from langchain_groq.chat_models import ChatGroq
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.prompts import (
@@ -55,8 +56,6 @@ from langchain.chains import LLMChain
 
 load_dotenv()
 #genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-
-
 
 app = FastAPI()
 
@@ -81,66 +80,34 @@ class LanguageModelProcessor:
         self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
         self.retriever = Chroma(persist_directory="./chatgpt_chroma_db", embedding_function=self.embeddings).as_retriever()
 
-        # self.system_prompt = """Role: You are an intelligent, context-aware bot designed to assist attendees of a specific event. Your purpose is to provide accurate, concise information regarding the event, the company hosting it, and the company’s products. If exact information is unavailable, you should try to offer nearby or related information. If a query is highly irrelevant or unclear, politely ask for more context to assist the attendee properly.
+        self.system_prompt = """Role: You are an intelligent, context-aware bot designed to assist attendees of a specific event. Your purpose is to provide accurate, concise information regarding the event, the company hosting it, and the company’s products. If exact information is unavailable, you should try to offer nearby or related information. If a query is highly irrelevant or unclear, politely ask for more context to assist the attendee properly.
 
-        # Instructions:
+        Instructions:
 
-        # Contextual Knowledge Source: You have access to a collection of documents containing all event-related information, the company’s history, details about the event (dates, times, location, agenda), and product details of the hosting company.
+        Contextual Knowledge Source: You have access to a collection of documents containing all event-related information, the company’s history, details about the event (dates, times, location, agenda), and product details of the hosting company.
 
-        # Task Execution:
+        Task Execution:
 
-        # If the attendee's query pertains to:
-        # Event Information: Respond with concise details about event timing, location, agenda, speakers, and any other relevant information.
-        # Company Information: Provide short, key details about the hosting company, its history, mission, or organizational structure.
-        # Product Information: Offer brief details about the company’s products or services, highlighting features, use cases, and pricing when relevant.
-        # Nearby Information Rule:
+        If the attendee's query pertains to:
+        Event Information: Respond with concise details about event timing, location, agenda, speakers, and any other relevant information.
+        Company Information: Provide short, key details about the hosting company, its history, mission, or organizational structure.
+        Product Information: Offer brief details about the company’s products or services, highlighting features, use cases, and pricing when relevant.
+        Nearby Information Rule:
 
-        # If you cannot find an exact answer but can infer related information from the context, provide that related information, making it clear that it's approximate.
-        # Example:
-        # "I don’t have the exact answer to your question, but based on similar details, I can offer this information..."
-        # Ask for More Context:
+        If you cannot find an exact answer but can infer related information from the context, provide that related information, making it clear that it's approximate.
+        Example:
+        "I don’t have the exact answer to your question, but based on similar details, I can offer this information..."
+        Ask for More Context:
 
-        # If the attendee’s query is highly irrelevant or unclear, ask for more context to assist effectively. Respond as follows:
-        # “I couldn’t fully understand your question. Could you please provide me a bit more context? This will help me give you the exact answer you need.”
-        # Short Answers First:
+        If the attendee’s query is highly irrelevant or unclear, ask for more context to assist effectively. Respond as follows:
+        “I couldn’t fully understand your question. Could you please provide me a bit more context? This will help me give you the exact answer you need.”
+        Short Answers First:
 
-        # Whenever possible, provide a short, direct answer rather than asking for more context, unless the query is clearly irrelevant or vague.
-        # Tone: Use a professional and helpful tone. Keep responses concise but informative.
+        Whenever possible, provide a short, direct answer rather than asking for more context, unless the query is clearly irrelevant or vague.
+        Tone: Use a professional and helpful tone. Keep responses concise but informative.
 
-        # Restrictions: Do not provide speculative answers. If no relevant information is found, ask for clarification or more context rather than providing an unsupported answer.
+        Restrictions: Do not provide speculative answers. If no relevant information is found, ask for clarification or more context rather than providing an unsupported answer.
            
-        # {context}"""
-
-        self.system_prompt = """You are a JazzCash customer support bot. Follow these steps in assisting the customer:
-
-Step 1: Greeting and Phone Number Verification
-
-Start by greeting the customer with:
-“Welcome to JazzCash Support. Please provide your phone number for verification.”
-Only ask for the phone number once.
-If the customer provides a number other than "03008925673", respond with:
-“That seems incorrect. Could you please provide the valid phone number?”
-If they provide a different format of "030089" or any other incorrect number, ask again in a polite manner.
-Do not provide any assistance or respond further until the correct phone number is provided.
-Step 2: After Correct Verification
-
-When the customer provides the correct phone number ("030089"), respond with:
-"Thank you! How can I assist you? You may ask about JazzCash services, file a complaint, or check your account."
-Step 3: Handling Customer Requests
-
-If asked about JazzCash services, provide a brief response:
-“JazzCash is Pakistan’s leading mobile wallet, offering services such as money transfers, bill payments, and mobile recharge. It is part of Jazz, Pakistan’s largest telecom operator.”
-
-If the customer asks about their account balance, always respond:
-"You have 553 PKR in your account."
-(Keep the response under 20 words, always the same amount.)
-
-If the customer wants to file a complaint, respond:
-“Please provide details of the complaint, and I will log it on your behalf.”
-
-Keep your responses polite and concise. Ensure that you only provide assistance after the correct phone number ("030089") is confirmed.
-
-
         {context}"""
 
         self.prompt_with_history = ChatPromptTemplate.from_messages(
@@ -254,21 +221,38 @@ def input_response(user_question: str):
     chain = get_conversational_chain()
     response = chain({"input_documents": docs, "question": user_question}, return_only_outputs=True)
     return response
+    
 
 class QueryRequest(BaseModel):
     station_id: int
     query: str
 
+current_face = None
+intro_sent = False
+
 @app.get("/query/")
 async def get_response(station_id: int = Query(...), query: str = Query(...)):
     llm = LanguageModelProcessor()
+    response = requests.get("http://localhost:5000/detect_face")
     try:
-        #llm_response = llm.process(query)
-        print(query)
-        response = llm.process_with_history(query, 123)
-        #response = input_response(query)
-        print("llm_response:", response)
-        return {"station_id": station_id, "response": response} #response["output_text"]
+        if response.status_code == 200:
+            data = response.json()
+            detected_face = data.get("face_detected")
+
+            if detected_face:
+                print("Face detected!")
+                # current_face = detected_face
+                # intro_sent = False
+                # if not intro_sent:
+                intro_message = "Welcome! How can I assist you today?"
+                return {"station_id": station_id, "response": intro_message}
+                # llm_response = llm.process(query)
+                # print(query)
+                # response = llm.process_with_history(query, 123)
+                # #response = input_response(query)
+                # print("llm_response:", response)
+                # return {"station_id": station_id, "response": response} #response["output_text"]
+            
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
