@@ -2,6 +2,7 @@ experiments.ipynb
 clustring_experiment.ipynb
 
 # Directories
+myenv
 venv/
 env/
 build/
