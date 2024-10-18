@@ -5,6 +5,10 @@ from src.utils import (
 )
 from src.model import PersonalDetails
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Ensure you import the LLM you're using
 
 # Initialize the model (e.g., OpenAI, GPT-4)

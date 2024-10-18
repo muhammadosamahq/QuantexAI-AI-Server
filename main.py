@@ -4,6 +4,9 @@ from langchain_openai import ChatOpenAI
 from src.utils import filter_response, ask_for_info
 from src.model import PersonalDetails
 
+from dotenv import load_dotenv
+
+load_dotenv()
 # Initialize FastAPI app
 app = FastAPI()
 
