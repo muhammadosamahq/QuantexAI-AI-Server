@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from langchain_openai import ChatOpenAI
-from src.utils import filter_response, ask_for_info
+from src.utils import check_greeting, filter_response, ask_for_info, check_what_is_empty
 from src.model import PersonalDetails
 
 # Initialize FastAPI app
@@ -24,55 +24,72 @@ ask_for = ["name", "confirm_name", "gender", "profile_picture", "voice_sample"]
 @app.post("/register")
 async def register_user(user_input: UserInput):
     global user_details, ask_for
+    ask_for = ask_for.pop(0)
 
-    if ask_for:
-        # Check if name and confirm_name are consistent
-        if (
-            user_details.confirm_name == ""
-            or user_details.confirm_name == user_details.name
-        ):
-            # Get AI response and track the last asked field
-            ai_response, last_field = ask_for_info(ask_for, llm)
-            user_details.last_asked_field = last_field  # Store last asked field
+    # ask_for = check_what_is_empty(user_details)
 
-            # Prepare input for filtering
-            overall_input = f"{last_field}: {user_input.text_input.lower()}"
-            user_details, ask_for = filter_response(overall_input, user_details, llm)
+    print(user_input)
+    print(user_details)
+    print("++++++++++++++++++++++++++++++++++++++++++")
+    print(ask_for)
 
-            # If more info is required, return the next prompt
-            if ask_for:
-                return {
-                    "status": "in_progress",
-                    "next_question": ai_response,
-                    "details": user_details.dict(),
-                }
-            else:
-                # All information is gathered, proceed to the next phase
-                return {
-                    "status": "completed",
-                    "message": "All details gathered!",
-                    "user_details": user_details.dict(),
-                }
+    # Check if name and confirm_name are consistent
+    if (
+        user_details.confirm_name == ""
+        or user_details.confirm_name == user_details.name
+    ):
+        # Get AI response and track the last asked field
+        ai_response, last_field = ask_for_info(llm, ask_for)
+        print("ai_response", ai_response)
+        user_details.last_asked_field = last_field  # Store last asked field
+
+        # Prepare input for filtering
+        overall_input = f"{last_field}: {user_input.text_input.lower()}"
+        user_details, ask_for, cross_response = filter_response(
+            overall_input, user_details, llm
+        )
+        print(user_details)
+        print(ask_for)
+
+        # if cross_response:
+        #     return {
+        #         "status": "in_progress",
+        #         "message": cross_response,
+        #         "next_question": ai_response,
+        #         "details": user_details,
+        #     }
+        # greeting = check_greeting(user_input.text_input)
+        # user_details = PersonalDetails() if greeting else user_details
+        # If more info is required, return the next prompt
+        if ask_for:
+            return {
+                "status": "in_progress",
+                "message": (cross_response if cross_response else None),
+                "next_question": ai_response,
+                "details": user_details,
+            }
         else:
-            # Reset if name confirmation fails
-            user_details = PersonalDetails()
-            ask_for = [
-                "name",
-                "confirm_name",
-                "gender",
-                "profile_picture",
-                "voice_sample",
-            ]
-            raise HTTPException(
-                status_code=400, detail="Name and confirm_name should be equal."
-            )
+            # All information is gathered, proceed to the next phase
+            return {
+                "status": "completed",
+                "message": "All details gathered!",
+                "user_details": user_details,
+            }
     else:
-        # All fields are already gathered
-        return {
-            "status": "completed",
-            "message": "All details already gathered.",
-            "user_details": user_details.dict(),
-        }
+        # Reset if name confirmation fails
+        user_details = PersonalDetails()
+        ask_for = [
+            "name",
+            "confirm_name",
+            "gender",
+            "profile_picture",
+            "voice_sample",
+        ]
+        raise HTTPException(
+            status_code=400, detail="Name and confirm_name should be equal."
+        )
+
+        # All fields are already gathere
 
 
 # To run the server, use: uvicorn main:app --reload

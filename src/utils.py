@@ -29,17 +29,20 @@ def add_non_empty_details(
     return updated_details
 
 
-def ask_for_info(ask_for: list, llm):
+def ask_for_info(llm, ask_for: list):
     current_field = ask_for[0]
-    # print(f"Current field: {current_field}")
+
+    print(f"Current field: {current_field}")
     # prompt template 1
     first_prompt = ChatPromptTemplate.from_template(
         """You are registering chatbot for an event
         Please ask the user for the following details in a conversational way, focusing on asking one item at a time from the 'ask_for' list  if you don't get all the info \
         don't ask as a list!:
+        - Do not repeat the same field again
         - Strictly Follow the order of ask_for list
+        - if any field is filled do not ask same field again
         - Do not repeat field if previouly ask strictly note that
-        - Do not miss any element from ask_for list 
+        - Do not miss any element from ask_for list
         - Pick the user unput correctly don't miss it
         - Do not ask for more than one item at a time.
         - Do not greet the user with 'hi', 'hey, there', or hello dear similar.
@@ -57,6 +60,9 @@ def ask_for_info(ask_for: list, llm):
         """
     )
 
+    # question = f"""
+    # please provide your {ask_for[0]}
+    # """
     # info_gathering_chain
     # info_gathering_chain = LLMChain(llm=model, prompt=first_prompt)
 
@@ -81,53 +87,103 @@ def ask_for_info(ask_for: list, llm):
 #     ask_for = check_what_is_empty(user_details)
 #     # print(ask_for)
 
+
 #     return user_details, ask_for
+def check_greeting(text_input):
+    if detect_greeting(text_input):
+        response = handle_greeting(text_input)
+        # user_details = PersonalDetails()
+        # ask_for = check_what_is_empty(user_details)
+        # print(ask_for)
+        return response
 
 
 def filter_response(text_input, user_details, llm):
     """Processes the user's input and updates details or handles cross-questions."""
-    if (
-        user_details.last_asked_field == "profile_picture"
-        and text_input.lower() == "ok"
-    ):
-        print("Capturing your profile picture...")
-        base64_image = capture_image_as_base64()
-        if base64_image:
-            user_details.profile_picture = base64_image
-            print("Profile picture saved successfully.")
-        else:
-            print("Failed to capture profile picture. Please try again.")
-        return user_details, check_what_is_empty(user_details)
+    cross_answer = ""
 
+    # Check if the input is a greeting (even during name confirmation)
+    # if detect_greeting(text_input):
+    #     field = user_details.dict().get("last_asked_field", "unknown")
+    #     response = handle_greeting(field)
+    #     cross_answer = response
+    #     ask_for = check_what_is_empty(user_details)
+    #     return user_details, ask_for, cross_answer
+
+    # Ask for the name again with proper prompt
+
+    # if (
+    #     user_details.last_asked_field == "profile_picture"
+    #     and text_input.lower() == "ok"
+    # ):
+    #     print("Capturing your profile picture...")
+
+    #     base64_image = capture_image_as_base64()
+    #     if base64_image:
+    #         user_details.profile_picture = base64_image
+    #         print("Profile picture saved successfully.")
+    #     else:
+    #         print("Failed to capture profile picture. Please try again.")
+    #     return user_details, check_what_is_empty(user_details)
+    chain = llm.with_structured_output(PersonalDetails)
+    # greeting = check_greeting(text_input)
     if detect_cross_question(text_input):
         field = user_details.dict().get("last_asked_field", "unknown")
-        # print(field)
+        print(field)
+
         response = handle_cross_question(field)
         print(response)
-        return user_details, [field]  # Ask the same field again
+        cross_answer = response
 
+        ask_for = check_what_is_empty(user_details)  # Safe initialization
+        print(f"========{ask_for}========")
+        return user_details, ask_for, cross_answer  # Ask the same field again
     # Process input normally
-    chain = llm.with_structured_output(PersonalDetails)
-    res = chain.invoke(text_input)
+    # elif greeting:
+    #     field = user_details.dict().get("last_asked_field", "unknown")
+    #     print(field)
+    #     ask_for = check_what_is_empty(user_details)
+    #     return user_details, ask_for, greeting
+    else:
+        res = chain.invoke(text_input)
 
-    # Update the user details with the new input
-    user_details = add_non_empty_details(user_details, res)
+        # Update the user details with the new input
+        user_details = add_non_empty_details(user_details, res)
+        # print("-----------------------------------------------------")
+        # print(user_details)
 
-    # # Check if name and confirm_name match
-    # if user_details.confirm_name and user_details.confirm_name != user_details.name:
-    #     print("Error: Name and confirm_name must be identical. Please try again.")
-    #     return user_details, ["confirm_name"]  # Ask for confirmation again
+        # # Check if name and confirm_name match
+        # if user_details.confirm_name and user_details.confirm_name != user_details.name:
+        #     print("Error: Name and confirm_name must be identical. Please try again.")
+        #     return user_details, ["confirm_name"]  # Ask for confirmation again
 
-    # Check which fields are still empty
-    ask_for = check_what_is_empty(user_details)
+        # Check which fields are still empty
+        ask_for = check_what_is_empty(user_details)
+        print("||||||||||||||||||||||||||||||||||||||||||||||||||||||")
+        print(ask_for)
 
-    return user_details, ask_for
+        return user_details, ask_for, cross_answer
 
 
 def detect_cross_question(user_input):
     """Detects if the user's input is a cross-question."""
     cross_question_keywords = ["why", "reason", "purpose", "necessary", "mandatory"]
     return any(keyword in user_input.lower() for keyword in cross_question_keywords)
+
+
+def detect_greeting(user_input):
+    greeting_keywords = ["hello", "hi", "hey"]
+    return any(keyword in user_input.lower() for keyword in greeting_keywords)
+
+
+def handle_greeting(user_input):
+    """Returns a response to greetings."""
+    responses = {
+        "hello": "Hi there! i am your personal Assistant",
+        "hi": "Hi there! i am your personal Assistant",
+        "hey": "Hi there! i am your personal Assistant",
+    }
+    return responses.get(user_input, "Hi there! i am your personal Assistant")
 
 
 def handle_cross_question(field):
