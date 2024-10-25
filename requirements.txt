@@ -1,7 +1,10 @@
-langchain
-huggingface_hub
-openai
-langchain_community
-python-dotenv
+fastapi
+uvicorn
+python-multipart==0.0.6
+pydantic==2.5.1
+sqlalchemy==2.0.23
+python-jose==3.3.0
 langchain-openai
-opencv-python
+langchain_community
+langchain
+python-dotenv
