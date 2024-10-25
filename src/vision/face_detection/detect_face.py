@@ -1,60 +1,37 @@
-import requests
-import threading
-import time
+from facenet_pytorch import MTCNN
+from PIL import Image, ImageDraw
 import cv2
-from fastapi import FastAPI
-from pydantic import BaseModel
+import numpy as np
 
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+mtcnn = MTCNN()
 
-def detect_faces_in_frame(frame):
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-    return len(faces) > 0, faces
-def show_video():
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        raise Exception("Error: Could not open camera.")
-    
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        face_detected, faces = detect_faces_in_frame(frame)
-        for (x, y, w, h) in faces:
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)        
-        cv2.imshow("Face Detection", frame)
-        
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    
-    cap.release()
-    cv2.destroyAllWindows()
+cap = cv2.VideoCapture(0)
 
-app = FastAPI()
+if not cap.isOpened():
+    print("Error: Could not open webcam.")
+    exit()
 
-class FaceDetectionResponse(BaseModel):
-    face_detected: bool
-
-@app.get("/detect_face", response_model=FaceDetectionResponse)
-def detect_face():
-    # Open the camera and read a frame
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        return {"face_detected": False}
-    
+while True:
     ret, frame = cap.read()
-    cap.release()
-    
     if not ret:
-        return {"face_detected": False}
-    face_detected, _ = detect_faces_in_frame(frame)
-    return {"face_detected": face_detected}
+        print("Error: Failed to capture image.")
+        break
+    pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    boxes, _ = mtcnn.detect(pil_image)
+    if boxes is not None:
+        draw = ImageDraw.Draw(pil_image)
+        for box in boxes:
+            draw.rectangle(box.tolist(), outline='red', width=3)
+        print("Face Detected: True")
+    else:
+        print("Face Detected: False")
 
-video_thread = threading.Thread(target=show_video)
-video_thread.daemon = True
-video_thread.start()
+    frame_with_boxes = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+    cv2.imshow('Webcam Feed', frame_with_boxes)
+    if boxes is not None:
+        pil_image.save('webcam_image.jpeg')
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+cap.release()
+cv2.destroyAllWindows()

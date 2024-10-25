@@ -2,11 +2,15 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 import tensorflow.compat.v1 as tf
 import numpy as np
-import facenet
 from skimage.transform import resize
-from align import detect_face
 import imageio
 from io import BytesIO
+
+import os
+import sys
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))
+import facenet
+from registration.align import detect_face
 
 app = FastAPI()
 
