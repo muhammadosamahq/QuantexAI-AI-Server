@@ -5,7 +5,12 @@ import uuid
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import get_db, User
-from utils import capture_photo, record_voice
+from utils import (
+    capture_photo,
+    detect_cross_question,
+    handle_cross_question,
+    record_voice,
+)
 import asyncio
 from model import PersonalDetails
 from langchain_openai import ChatOpenAI
@@ -65,7 +70,14 @@ async def chat(user_id: str, chat_message: ChatMessage, db: Session = Depends(ge
         raise HTTPException(status_code=404, detail="Session not found")
 
     state = registration_states[user_id]
+    print(f"state:{state}")
     text_input = chat_message.message
+    is_cross_question = detect_cross_question(text_input)
+    if is_cross_question:
+        current_step = state.current_step
+        print(current_step)
+        state.username = None
+        return handle_cross_question(current_step)
     message = chain.invoke(text_input)
     # print(message.name)
     if state.current_step == "name":
@@ -87,29 +99,46 @@ async def chat(user_id: str, chat_message: ChatMessage, db: Session = Depends(ge
                 return {"response": "Let's start over. What is your name?"}
 
     elif state.current_step == "gender":
+        is_cross_question = detect_cross_question(text_input)
+        if is_cross_question:
+            current_step = state.current_step
+            state.gender = None
+            return handle_cross_question(current_step)
         if text_input.lower() in ["male", "female"]:
             state.gender = text_input.lower()
             state.current_step = "photo"
             return {
-                "response": "Perfect! Now, let's take your profile picture. Click the 'Take Photo' button when ready."
+                "response": "Perfect! Now, please stand straight in front of the camera so I can take your picture. Just say 'ready' whenever you're ready to capture it."
             }
         else:
             return {"response": "Please specify either 'male' or 'female'."}
 
     elif state.current_step == "photo":
+        is_cross_question = detect_cross_question(text_input)
+        if is_cross_question:
+            current_step = state.current_step
+            chat_message.image_data = None
+            return handle_cross_question(current_step)
         if text_input.lower() == "ready":
             await asyncio.sleep(5)
-            text_input.image_data = capture_photo()
+            chat_message.image_data = capture_photo()
             state.profile_pic = (
                 chat_message.image_data
             )  # Set the profile picture from the incoming image data
             state.current_step = "voice"
             return {
-                "response": "Photo saved! Now, let's record your voice. Click the 'Record Voice' button when ready."
+                "response": "Photo saved! Now, please say the following phrase: 'I am the luckiest guy in the world,' or anything else you'd like. Just say 'ready' when you're good to start recording your voice sample."
             }
-        return {"response": "Please take a photo using the camera button."}
+        return {
+            "response": "A profile picture is necessary for identification at the event. Please provide a profile picture and say 'ready' when yu are ready."
+        }
 
     elif state.current_step == "voice":
+        is_cross_question = detect_cross_question(text_input)
+        if is_cross_question:
+            current_step = state.current_step
+            chat_message.image_data = None
+            return handle_cross_question(current_step)
         if text_input.lower() == "ready":
             await asyncio.sleep(5)
             chat_message.audio_data = await record_voice()
