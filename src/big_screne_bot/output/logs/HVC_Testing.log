@@ -1,0 +1,31 @@
+2024-02-28 12:40:48,194 - INFO - Streaming started
+2024-02-28 12:42:19,833 - INFO - High Networth Data Request_payload: {'country': 'pakistan', 'branch': 'clifton', 'city': 'karachi', 'timestamp': '2024-02-28T12:42:19+05:00', 'customerName': 'Valery', 'gender': 'FEMALE'}
+2024-02-28 12:42:19,835 - DEBUG - Starting new HTTP connection (1): 13.126.160.174:5000
+2024-02-28 12:42:20,155 - DEBUG - http://13.126.160.174:5000 "POST /high-net-worth HTTP/1.1" 200 None
+2024-02-28 12:42:20,156 - INFO - Alert sent successfully
+Response: {"id":88,"country":"pakistan","branch":"clifton","city":"karachi","timestamp":"2024-02-28T12:42:19+05:00","customerName":"Valery","gender":"FEMALE"}
+2024-02-28 12:42:20,156 - INFO - Notification Request_payload:{'timestamp': '2024-02-28T12:42:20+05:00', 'message': 'Valery is detected in Clifton Branch, Karachi at 12:42 PM, 28-Feb-2024', 'country': 'pakistan', 'city': 'karachi', 'branch': 'clifton', 'usecase': 'high networth'}
+2024-02-28 12:42:20,156 - DEBUG - Starting new HTTP connection (1): 13.126.160.174:5000
+2024-02-28 12:42:20,487 - DEBUG - http://13.126.160.174:5000 "POST /notification HTTP/1.1" 200 None
+2024-02-28 12:42:20,488 - INFO - Request Successful
+Response: {"id":20705,"country":"pakistan","branch":"clifton","city":"karachi","timestamp":"2024-02-28T12:42:20+05:00","message":"Valery is detected in Clifton Branch, Karachi at 12:42 PM, 28-Feb-2024","usecase":"high networth"}
+2024-02-28 12:42:24,997 - INFO - High Networth Data Request_payload: {'country': 'pakistan', 'branch': 'clifton', 'city': 'karachi', 'timestamp': '2024-02-28T12:42:24+05:00', 'customerName': 'Faraz', 'gender': 'MALE'}
+2024-02-28 12:42:24,998 - DEBUG - Starting new HTTP connection (1): 13.126.160.174:5000
+2024-02-28 12:42:25,310 - DEBUG - http://13.126.160.174:5000 "POST /high-net-worth HTTP/1.1" 200 None
+2024-02-28 12:42:25,311 - INFO - Alert sent successfully
+Response: {"id":89,"country":"pakistan","branch":"clifton","city":"karachi","timestamp":"2024-02-28T12:42:24+05:00","customerName":"Faraz","gender":"MALE"}
+2024-02-28 12:42:25,311 - INFO - Notification Request_payload:{'timestamp': '2024-02-28T12:42:25+05:00', 'message': 'Faraz is detected in Clifton Branch, Karachi at 12:42 PM, 28-Feb-2024', 'country': 'pakistan', 'city': 'karachi', 'branch': 'clifton', 'usecase': 'high networth'}
+2024-02-28 12:42:25,312 - DEBUG - Starting new HTTP connection (1): 13.126.160.174:5000
+2024-02-28 12:42:25,510 - DEBUG - http://13.126.160.174:5000 "POST /notification HTTP/1.1" 200 None
+2024-02-28 12:42:25,511 - INFO - Request Successful
+Response: {"id":20709,"country":"pakistan","branch":"clifton","city":"karachi","timestamp":"2024-02-28T12:42:25+05:00","message":"Faraz is detected in Clifton Branch, Karachi at 12:42 PM, 28-Feb-2024","usecase":"high networth"}
+2024-02-28 12:42:25,649 - INFO - High Networth Data Request_payload: {'country': 'pakistan', 'branch': 'clifton', 'city': 'karachi', 'timestamp': '2024-02-28T12:42:25+05:00', 'customerName': 'Novette', 'gender': 'FEMALE'}
+2024-02-28 12:42:25,650 - DEBUG - Starting new HTTP connection (1): 13.126.160.174:5000
+2024-02-28 12:42:25,933 - DEBUG - http://13.126.160.174:5000 "POST /high-net-worth HTTP/1.1" 200 None
+2024-02-28 12:42:25,933 - INFO - Alert sent successfully
+Response: {"id":90,"country":"pakistan","branch":"clifton","city":"karachi","timestamp":"2024-02-28T12:42:25+05:00","customerName":"Novette","gender":"FEMALE"}
+2024-02-28 12:42:25,934 - INFO - Notification Request_payload:{'timestamp': '2024-02-28T12:42:25+05:00', 'message': 'Novette is detected in Clifton Branch, Karachi at 12:42 PM, 28-Feb-2024', 'country': 'pakistan', 'city': 'karachi', 'branch': 'clifton', 'usecase': 'high networth'}
+2024-02-28 12:42:25,934 - DEBUG - Starting new HTTP connection (1): 13.126.160.174:5000
+2024-02-28 12:42:26,210 - DEBUG - http://13.126.160.174:5000 "POST /notification HTTP/1.1" 200 None
+2024-02-28 12:42:26,211 - INFO - Request Successful
+Response: {"id":20711,"country":"pakistan","branch":"clifton","city":"karachi","timestamp":"2024-02-28T12:42:25+05:00","message":"Novette is detected in Clifton Branch, Karachi at 12:42 PM, 28-Feb-2024","usecase":"high networth"}

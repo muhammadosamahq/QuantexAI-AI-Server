@@ -1,0 +1,3 @@
+2024-02-22 16:07:12,376 - INFO - Streaming started
+2024-02-22 16:10:10,114 - INFO - Request_payload: {'country': 'pakistan', 'branch': 'clifton', 'city': 'karachi', 'timestamp': '2024-02-22T16:10:10+05:00', 'customerName': 'Maqsood'}
+2024-02-22 16:10:10,114 - INFO - Notification Request_payload:{'timestamp': '2024-02-22T16:10:10+05:00', 'message': 'Maqsood is detected in Clifton Branch, Karachi at 04:10 PM, 22-Feb-2024', 'country': 'pakistan', 'city': 'karachi', 'branch': 'clifton', 'usecase': 'high networth'}

@@ -1,0 +1,5 @@
+2024-02-23 09:24:31,906 - INFO - Streaming started
+2024-02-23 09:26:16,572 - INFO - Request_payload: {'country': 'pakistan', 'branch': 'clifton', 'city': 'karachi', 'timestamp': '2024-02-23T09:26:16+05:00', 'customerName': 'Rehman', 'gender': 'MALE'}
+2024-02-23 09:26:16,572 - INFO - Notification Request_payload:{'timestamp': '2024-02-23T09:26:16+05:00', 'message': 'Rehman is detected in Clifton Branch, Karachi at 09:26 AM, 23-Feb-2024', 'country': 'pakistan', 'city': 'karachi', 'branch': 'clifton', 'usecase': 'high networth'}
+2024-02-23 09:36:18,446 - INFO - Request_payload: {'country': 'pakistan', 'branch': 'clifton', 'city': 'karachi', 'timestamp': '2024-02-23T09:36:18+05:00', 'customerName': 'Shershah_Branch'}
+2024-02-23 09:36:18,447 - INFO - Notification Request_payload:{'timestamp': '2024-02-23T09:36:18+05:00', 'message': 'Shershah_Branch is detected in Clifton Branch, Karachi at 09:36 AM, 23-Feb-2024', 'country': 'pakistan', 'city': 'karachi', 'branch': 'clifton', 'usecase': 'high networth'}
