@@ -8,3 +8,9 @@ langchain-openai
 langchain_community
 langchain
 python-dotenv
+fastapi
+uvicorn
+python-multipart
+SpeechRecognition
+pyttsx3
+pyaudio
