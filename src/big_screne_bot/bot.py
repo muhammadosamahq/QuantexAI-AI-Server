@@ -10,89 +10,50 @@ load_dotenv()
 # Initialize the language model
 llm = ChatOpenAI(temperature=0, model_name="gpt-4o-mini", openai_api_key=os.getenv("OPENAI_API_KEY"))
 
-# Directory where you want to save the JSON files
-DATA_DIRECTORY = "data"
-os.makedirs(DATA_DIRECTORY, exist_ok=True)  # Ensure the directory exists
 
-# Read the transcript content from the file
-def load_all_transcriptions():
-    TRANSCRIPTION_FOLDER = "transcriptions"
-    """Loads all transcriptions from the folder and returns a dictionary with names and their transcripts."""
-    transcriptions = {}
-    
-    # Iterate through each file in the transcriptions folder
-    for file_name in os.listdir(TRANSCRIPTION_FOLDER):
-        # Only process text files
-        if file_name.endswith(".txt"):
-            # Extract the person's name from the filename (e.g., 'osama' from 'osama.txt')
-            person_name = os.path.splitext(file_name)[0]
-            
-            # Read the transcription content
-            file_path = os.path.join(TRANSCRIPTION_FOLDER, file_name)
-            with open(file_path, 'r') as file:
-                transcript_content = file.read()
-            
-            # Store the transcript content in the dictionary with the person's name as the key
-            transcriptions[person_name] = transcript_content
-    
-    return transcriptions
-
-all_transcriptions = load_all_transcriptions()
-for name, transcript_content in all_transcriptions.items():
-    json_object = {}
-    json_object["name"] = name
-    json_object["transcription"] = transcript_content
-    print(f"Name: {name}")
-    print(f"Transcription:\n{transcript_content}\n")
-
-
-    # Define the system prompt to generate questions in JSON format
-    system_prompt = """Role: Following is a speech of a person, generate 3 intellectual questions from this speech in JSON format.
-                        The output should be structured as follows:
-                        {{
-                            "key1": "Question 1",
-                            "key2": "Question 2",
-                            "key3": "Question 3"
-                        }}
-                        Speech: {transcript_content}"""
-
-    # Prepare the input for the model
-    input_data = {
-        "transcript_content": transcript_content
+personData = {
+    "name": "osama",
+    "transcription": "okay let's talk about this another important topic which is the best moment of the life so i'm gonna just tell you what's the best what's the best moment of my\nthat was actually when i was traveling from pakistan to dubai and i was just and i was about to sit in the plane and there were some challenges i faced that because that was the first time i was going inside the plane so i didn't know i don't know what are the protocols actually that we that andy that every passenger has to follow so that's the first thing i was stuck there i was is struggling in that part finally when i sat on my seat and the plane just took off there were some amazing experiences i felt\nplugs okay thank you",
+    "questions": {
+        "1": "What specific challenges did the speaker face while preparing to board the plane for the first time?",
+        "2": "How did the speaker's feelings change from the moment of boarding to the moment the plane took off?",
+        "3": "What does the speaker consider to be the significance of this travel experience in the context of their life?"
     }
+}
 
-    # Create the prompt using the template
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", system_prompt),
-            ("human", "Please generate questions based on the following speech.")
-        ]
-    )
+system_prompt = """You are provided with information about a person in the form of a JSON object called `personData`. Your task is to answer any queries based solely on the details within this JSON object. Follow these guidelines:
 
-    # Invoke the model with the prepared prompt
-    response = llm.invoke(prompt.invoke(input_data))
+1. **Access and Identify Data**: Locate relevant keys and values in `personData` that match the query topic.
+2. **Answer Scope**: Respond strictly based on the JSON data. If the answer is not in `personData`, respond with: “This information is not available in the provided data.”
+3. **Natural, Personalized Responses**: Use full sentences, and include the person’s name or other relevant identifiers where possible to make responses feel more personalized.
+4. **Conciseness and Specificity**: Keep answers brief and focused on the query, avoiding unnecessary information.
 
-    # Parse the response to JSON
-    try:
-        questions_json = json.loads(response.content)
-        print(questions_json)
-        questions = {}
-        for counter, (key, value) in enumerate(questions_json.items()):
-            questions[counter+1] = value
-        json_object["questions"] = questions
-        print("json_object", json_object)
+Here is the JSON object variable format to reference in your responses:
 
-        # Define the file path using the name field
-        file_name = f"{json_object['name']}.json"
-        file_path = os.path.join(DATA_DIRECTORY, file_name)
+**JSON Object Variable:**
+```json
+{{personData}}
+"""
 
-        # Save json_object to a JSON file
-        with open(file_path, 'w') as json_file:
-            json.dump(json_object, json_file, indent=4)
+person_data_str = json.dumps(personData, indent=2)
+# # Prepare the input for the model
+# input_data = {
+#     "transcript_content": personData
+# }
 
-        print(f"JSON object saved to {file_path}")
-        
+# Create the prompt using the template
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", system_prompt),
+        ("human", "{input}")
+    ]
+)
 
-    except json.JSONDecodeError:
-        print("Failed to decode JSON response:", response.content)
+# chain = llm | prompt
 
+# print(chain.invoke({"transcript_content": person_data_str, "input": "wdo you have any questions for osama?"}))
+
+
+response = llm.invoke(prompt.invoke({"transcript_content": person_data_str, "input": "wdo you have any questions for osama?"}))
+
+print(response)
