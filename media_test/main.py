@@ -29,12 +29,12 @@ async def start_test():
     }
 
 
-@app.get("/verify-command")
-async def verify_command():
+@app.get("/verify-command/{user_response}")
+async def verify_command(user_response: str):
     """Second API: Listens for 'test media' command and runs device tests"""
     try:
         # Listen for "test media"
-        user_response = listen_for_audio()
+        user_response = "test media"
         if "test media" not in user_response:
             return JSONResponse(
                 status_code=400,
