@@ -118,8 +118,8 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
 CHUNK = 1024
-AUDIO_FOLDER = "recordings"
-os.makedirs(AUDIO_FOLDER, exist_ok=True)
+BASE_AUDIO_FOLDER = "recordings"
+os.makedirs(BASE_AUDIO_FOLDER, exist_ok=True)
 
 # Initialize PyAudio
 p = pyaudio.PyAudio()
@@ -128,13 +128,18 @@ p = pyaudio.PyAudio()
 recording = False
 frames = []
 stream = None
+recognized_name = None
 
-def start_recording():
+def start_recording(person_name):
     global recording, frames, stream
     recording = True
     frames = []
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
     print("Recording...")
+
+    # Create a directory for each recognized person
+    person_folder = os.path.join(BASE_AUDIO_FOLDER, person_name)
+    os.makedirs(person_folder, exist_ok=True)
 
     while recording:
         data = stream.read(CHUNK)
@@ -144,7 +149,7 @@ def start_recording():
     stream.stop_stream()
     stream.close()
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    wave_filename = os.path.join(AUDIO_FOLDER, f"recording_{timestamp}.wav")
+    wave_filename = os.path.join(person_folder, f"recording_{timestamp}.wav")
     wf = wave.open(wave_filename, "wb")
     wf.setnchannels(CHANNELS)
     wf.setsampwidth(p.get_sample_size(FORMAT))
@@ -154,7 +159,7 @@ def start_recording():
     print(f"Recording complete. Saved as {wave_filename}")
 
 def process_facial_recognition():
-    global recording
+    global recording, recognized_name
 
     # Open a connection to the webcam
     video_capture = cv2.VideoCapture(0)
@@ -180,9 +185,10 @@ def process_facial_recognition():
                 name = result["name"]
                 cv2.putText(frame, f"Recognized: {name}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-                # Start the recording thread if not already recording
-                if not recording:
-                    recording_thread = threading.Thread(target=start_recording)
+                # Start the recording thread for this person if not already recording
+                if not recording or recognized_name != name:
+                    recognized_name = name
+                    recording_thread = threading.Thread(target=start_recording, args=(name,))
                     recording_thread.start()
             else:
                 cv2.putText(frame, "Face Not Recognized", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
